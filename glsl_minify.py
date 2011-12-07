@@ -37,17 +37,14 @@ class GlslObfuscator:
   def __init__ (self, prefix = b"_"):
     self.replacements = {}
     self.prefix       = prefix
-    self.name_index   = 0
+    self.name_index   = 1
 
   def indexToName (self, index):
     out = []
-    if index == 0:
-      out.append (self.name_chars[0:1])
-    else:
-      while index > 0:
-        char_index = index % len (self.name_chars)
-        out.append (self.name_chars[char_index:char_index + 1])
-        index = index // len (self.name_chars)
+    while index > 0:
+      char_index = index % len (self.name_chars)
+      out.append (self.name_chars[char_index:char_index + 1])
+      index = index // len (self.name_chars)
 
     out.reverse ()
     return self.prefix + b"".join (out)

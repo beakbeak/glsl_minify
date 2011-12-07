@@ -28,9 +28,8 @@ from sys import stderr
 
 class GlslObfuscator:
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
-  re_comment       = re.compile (br" *//.*?$|/\*.*?\*/",
+  re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +|(?<=#) +",
                                  re.DOTALL | re.MULTILINE)
-  re_leading_space = re.compile (br"^ +", re.MULTILINE)
   re_extra_space   = re.compile (br" {2,}")
   re_empty_lines   = re.compile (br"\n{2,}")
   name_chars       = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -56,6 +55,10 @@ class GlslObfuscator:
     return out
 
   def obfuscate (self, text):
+    text = self.re_remove.sub (b"", text)
+    text = self.re_empty_lines.sub (b"\n", text)
+    text = self.re_extra_space.sub (b" ", text)
+
     out = []
     index = 0
 
@@ -80,10 +83,7 @@ class GlslObfuscator:
     if index < len (text):
       out.append (text[index:])
 
-    out = self.re_comment.sub (b"", b"".join (out))
-    out = self.re_leading_space.sub (b"", out)
-    out = self.re_empty_lines.sub (b"\n", out)
-    return self.re_extra_space.sub (b" ", out)
+    return b"".join (out)
 
   def obfuscateFile (self, filename):
     with open (filename, "rb") as f:

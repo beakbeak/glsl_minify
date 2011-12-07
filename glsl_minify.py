@@ -28,7 +28,8 @@ from sys import stderr
 
 class GlslObfuscator:
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
-  re_comment       = re.compile (br"//.*?$|/\*.*?\*/", re.DOTALL | re.MULTILINE)
+  re_comment       = re.compile (br" *//.*?$|/\*.*?\*/",
+                                 re.DOTALL | re.MULTILINE)
   re_leading_space = re.compile (br"^ +", re.MULTILINE)
   re_extra_space   = re.compile (br" {2,}")
   re_empty_lines   = re.compile (br"\n{2,}")

@@ -34,18 +34,9 @@ class GlslObfuscator:
   name_chars       = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
   def __init__ (self, prefix = b"_"):
-#    self.identifiers  = set ()
     self.replacements = {}
     self.prefix       = prefix
     self.name_index   = 0
-
-#  def preprocess (self, text):
-#    for match in self.re_identifier.finditer (text):
-#      self.identifiers.add (match.group (0))
-#
-#  def preprocessFile (self, filename):
-#    with open (filename, "rb") as f:
-#      self.preprocess (f.read ())
 
   def indexToName (self, index):
     out = []
@@ -63,9 +54,6 @@ class GlslObfuscator:
   def nextName (self):
     out = self.indexToName (self.name_index)
     self.name_index += 1
-#    while out in self.identifiers:
-#      out = self.indexToName (self.name_index)
-#      self.name_index += 1
     return out
 
   def obfuscate (self, text):

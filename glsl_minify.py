@@ -24,6 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+from sys import stderr
 
 class GlslObfuscator:
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
@@ -72,6 +73,11 @@ class GlslObfuscator:
 
         out.append (replacement)
         index = match.end ()
+
+      elif match.group (0).endswith (self.prefix):
+        stderr.write ("*** warning: ")
+        stderr.write (match.group (0).decode ())
+        stderr.write ("\n")
 
     if index < len (text):
       out.append (text[index:])

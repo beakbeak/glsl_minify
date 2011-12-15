@@ -28,10 +28,10 @@ from sys import stderr
 
 class GlslObfuscator:
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
-  re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +|(?<=#) +",
+  re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +",
                                  re.DOTALL | re.MULTILINE)
-  re_extra_space   = re.compile (br" {2,}")
-  re_empty_lines   = re.compile (br"\n{2,}")
+  re_padding       = re.compile (br" *(#+|[+*-/]=?|[.,();=?:]|[|&]{2}) *")
+  re_multispace    = re.compile (br"( |\n){2,}")
   name_chars       = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
   def __init__ (self, prefix = b"_"):
@@ -56,8 +56,8 @@ class GlslObfuscator:
 
   def obfuscate (self, text):
     text = self.re_remove.sub (b"", text)
-    text = self.re_empty_lines.sub (b"\n", text)
-    text = self.re_extra_space.sub (b" ", text)
+    text = self.re_padding.sub (br"\1", text)
+    text = self.re_multispace.sub (br"\1", text)
 
     out = []
     index = 0

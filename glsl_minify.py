@@ -34,9 +34,15 @@ class GlslObfuscator:
   re_multispace    = re.compile (br"( |\n){2,}")
   name_chars       = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-  def __init__ (self, prefix = b"_"):
+  def __init__ (self, in_prefix = None, out_prefix = None):
+    if not in_prefix:
+      in_prefix = b"_"
+    if not out_prefix:
+      out_prefix = b"_0"
+
     self.replacements = {}
-    self.prefix       = prefix
+    self.in_prefix    = in_prefix
+    self.out_prefix   = out_prefix
     self.name_index   = 1
 
   def indexToName (self, index):
@@ -47,7 +53,7 @@ class GlslObfuscator:
       index = index // len (self.name_chars)
 
     out.reverse ()
-    return self.prefix + b"".join (out)
+    return self.out_prefix + b"".join (out)
 
   def nextName (self):
     out = self.indexToName (self.name_index)
@@ -63,7 +69,8 @@ class GlslObfuscator:
     index = 0
 
     for match in self.re_identifier.finditer (text):
-      if match.group (0).startswith (self.prefix) and match.group (0).find (b"__") < 0:
+      if (match.group (0).startswith (self.in_prefix)
+          and match.group (0).find (b"__") < 0):
         replacement = self.replacements.get (match.group (0))
         if replacement is None:
           replacement = self.nextName ()
@@ -75,7 +82,7 @@ class GlslObfuscator:
         out.append (replacement)
         index = match.end ()
 
-      elif match.group (0).endswith (self.prefix):
+      elif match.group (0).endswith (self.in_prefix):
         stderr.write ("*** warning: ")
         stderr.write (match.group (0).decode ())
         stderr.write ("\n")

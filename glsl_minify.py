@@ -30,7 +30,8 @@ class GlslObfuscator:
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
   re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +",
                                  re.DOTALL | re.MULTILINE)
-  re_padding       = re.compile (br" *(#+|[+*-/]=?|[.,();=?:]|[|&]{2}) *")
+  re_pre_padding   = re.compile (br" *(#+|[+*-/=<>!]=?|[.,();?:{}]|[|&]{2})")
+  re_post_padding  = re.compile (br"(#+|[+*-/=<>!]=?|[.,(;?:{}]|[|&]{2}) *")
   re_multispace    = re.compile (br"( |\n){2,}")
   name_chars       = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -62,7 +63,8 @@ class GlslObfuscator:
 
   def obfuscate (self, text):
     text = self.re_remove.sub (b"", text)
-    text = self.re_padding.sub (br"\1", text)
+    text = self.re_pre_padding.sub (br"\1", text)
+    text = self.re_post_padding.sub (br"\1", text)
     text = self.re_multispace.sub (br"\1", text)
 
     out = []

@@ -27,6 +27,7 @@ import re
 from sys import stderr
 
 class GlslObfuscator:
+  re_tab           = re.compile (br"\t")
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
   re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +",
                                  re.DOTALL | re.MULTILINE)
@@ -62,6 +63,7 @@ class GlslObfuscator:
     return out
 
   def obfuscate (self, text):
+    text = self.re_tab.sub (b" ", text)
     text = self.re_remove.sub (b"", text)
     text = self.re_pre_padding.sub (br"\1", text)
     text = self.re_post_padding.sub (br"\1", text)

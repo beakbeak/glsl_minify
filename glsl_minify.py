@@ -26,7 +26,7 @@
 import re
 from sys import stderr
 
-class GlslObfuscator:
+class GlslMinifier:
   re_tab           = re.compile (br"\t")
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
   re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +",
@@ -62,7 +62,7 @@ class GlslObfuscator:
     self.name_index += 1
     return out
 
-  def obfuscate (self, text):
+  def minify (self, text):
     text = self.re_tab.sub (b" ", text)
     text = self.re_remove.sub (b"", text)
     text = self.re_pre_padding.sub (br"\1", text)
@@ -96,6 +96,45 @@ class GlslObfuscator:
 
     return b"".join (out)
 
-  def obfuscateFile (self, filename):
+  def minifyFile (self, filename):
     with open (filename, "rb") as f:
-      return self.obfuscate (f.read ())
+      return self.minify (f.read ())
+
+if __name__ == "__main__":
+  import sys
+
+  if sys.version_info[0] < 3:
+    sys.exit ("Error: Python 2 not supported when using as standalone tool")
+
+  import argparse
+
+  arg_parser = argparse.ArgumentParser ()
+  arg_parser.add_argument ("in_path", nargs = 1, help = "path containing source glsl files")
+  arg_parser.add_argument ("out_path", nargs = 1, help = "where to store output files")
+  arg_parser.add_argument ("filenames", nargs = '*', help = "optional list of file paths relative to current directory")
+  args = arg_parser.parse_args ()
+
+  import os
+
+  minifier = GlslMinifier ()
+  in_path = args.in_path[0]
+  out_path = args.out_path[0]
+
+  def minifyFile (filename):
+    minified_text = minifier.minifyFile (filename)
+    out_dirname   = os.path.join (out_path, os.path.relpath (os.path.dirname (filename), in_path))
+    out_filename  = os.path.join (out_dirname, os.path.basename (filename))
+
+    print ("minifying " + out_filename)
+    os.makedirs (out_dirname, exist_ok = True)
+    with open (out_filename, "wb") as f:
+      f.write (minified_text)
+
+  if args.filenames:
+    for filename in args.filenames:
+      minifyFile (filename)
+  else:
+    for dirpath, dirnames, filenames in os.walk (in_path, onerror = lambda e: stderr.write (str (e))):
+      for filename in filenames:
+        if filename.lower ().endswith (".glsl"):
+          minifyFile (os.path.join (dirpath, filename))

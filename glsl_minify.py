@@ -40,7 +40,7 @@ class GlslMinifier:
     if not in_prefix:
       in_prefix = b"_"
     if not out_prefix:
-      out_prefix = b"_0"
+      out_prefix = b"_"
 
     self.replacements = {}
     self.in_prefix    = in_prefix

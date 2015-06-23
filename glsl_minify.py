@@ -101,11 +101,6 @@ class GlslMinifier:
       return self.minify (f.read ())
 
 if __name__ == "__main__":
-  import sys
-
-  if sys.version_info[0] < 3:
-    sys.exit ("Error: Python 2 not supported when using as standalone tool")
-
   import argparse
 
   arg_parser = argparse.ArgumentParser ()
@@ -114,7 +109,7 @@ if __name__ == "__main__":
   arg_parser.add_argument ("filenames", nargs = '*', help = "optional list of file paths relative to current directory")
   args = arg_parser.parse_args ()
 
-  import os
+  import os, errno
 
   minifier = GlslMinifier ()
   in_path = args.in_path[0]
@@ -126,7 +121,15 @@ if __name__ == "__main__":
     out_filename  = os.path.join (out_dirname, os.path.basename (filename))
 
     print ("minifying " + out_filename)
-    os.makedirs (out_dirname, exist_ok = True)
+
+    try:
+      os.makedirs (out_dirname)
+    except OSError as e:
+      if e.errno == errno.EEXIST and os.path.isdir (out_dirname):
+        pass
+      else:
+        raise
+
     with open (out_filename, "wb") as f:
       f.write (minified_text)
 

@@ -29,7 +29,7 @@ from sys import stderr
 class GlslMinifier:
   re_tab           = re.compile (br"\t")
   re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
-  re_remove        = re.compile (br" *//.*?$|/\*.*?\*/|^ +",
+  re_remove        = re.compile (br"\r| *//.*?$|/\*.*?\*/|^ +",
                                  re.DOTALL | re.MULTILINE)
   re_pre_padding   = re.compile (br" *(#+|[+*-/=<>!]=?|[.,();?:{}]|[|&]{2})")
   re_post_padding  = re.compile (br"(#+|[+*-/=<>!]=?|[.,(;?:{}]|[|&]{2}) *")

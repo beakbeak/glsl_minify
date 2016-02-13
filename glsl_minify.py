@@ -27,14 +27,16 @@ import re
 from sys import stderr
 
 class GlslMinifier:
-  re_tab           = re.compile (br"\t")
-  re_identifier    = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
-  re_remove        = re.compile (br"\r| *//.*?$|/\*.*?\*/|^ +",
-                                 re.DOTALL | re.MULTILINE)
-  re_pre_padding   = re.compile (br" *(#+|[+*-/=<>!]=?|[.,();?:{}]|[|&]{2})")
-  re_post_padding  = re.compile (br"(#+|[+*-/=<>!]=?|[.,(;?:{}]|[|&]{2}) *")
-  re_multispace    = re.compile (br"( |\n){2,}")
-  name_chars       = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  re_tab                = re.compile (br"\t")
+  re_identifier         = re.compile (br"(?<!#)[a-zA-Z_][a-zA-Z0-9_]*")
+  re_remove             = re.compile (br"\r| *//.*?$|/\*.*?\*/|^ +",
+                                      re.DOTALL | re.MULTILINE)
+  re_define             = re.compile (br" *# *define")
+  re_define_pre_padding = re.compile (br" *(#+|[+*-/=<>!]=?|[.,);?:{}]|[|&]{2})")
+  re_pre_padding        = re.compile (br" *(#+|[+*-/=<>!]=?|[.,();?:{}]|[|&]{2})")
+  re_post_padding       = re.compile (br"(#+|[+*-/=<>!]=?|[.,(;?:{}]|[|&]{2}) *")
+  re_multispace         = re.compile (br"( |\n){2,}")
+  name_chars            = br"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
   def __init__ (self, in_prefix = None, out_prefix = None):
     if not in_prefix:
@@ -65,7 +67,16 @@ class GlslMinifier:
   def minify (self, text):
     text = self.re_tab.sub (b" ", text)
     text = self.re_remove.sub (b"", text)
-    text = self.re_pre_padding.sub (br"\1", text)
+
+    text = text.splitlines ()
+    for index, line in enumerate (text):
+      if self.re_define.match (line):
+        text[index] = self.re_define_pre_padding.sub (br"\1", line)
+      else:
+        text[index] = self.re_pre_padding.sub (br"\1", line)
+    text.append ("")
+    text = b"\n".join (text)
+
     text = self.re_post_padding.sub (br"\1", text)
     text = self.re_multispace.sub (br"\1", text)
 

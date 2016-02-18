@@ -97,10 +97,10 @@ class GlslMinifier:
         out.append (replacement)
         index = match.end ()
 
-      elif match.group (0).endswith (self.in_prefix):
-        stderr.write ("*** warning: ")
-        stderr.write (match.group (0).decode ())
-        stderr.write ("\n")
+#      elif match.group (0).endswith (self.in_prefix):
+#        stderr.write ("*** warning: ")
+#        stderr.write (match.group (0).decode ())
+#        stderr.write ("\n")
 
     if index < len (text):
       out.append (text[index:])

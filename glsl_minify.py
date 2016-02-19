@@ -74,7 +74,7 @@ class GlslMinifier:
         text[index] = self.re_define_pre_padding.sub (br"\1", line)
       else:
         text[index] = self.re_pre_padding.sub (br"\1", line)
-    text.append ("")
+    text.append (b"")
     text = b"\n".join (text)
 
     text = self.re_post_padding.sub (br"\1", text)

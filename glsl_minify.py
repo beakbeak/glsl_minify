@@ -115,6 +115,7 @@ if __name__ == "__main__":
   import argparse
 
   arg_parser = argparse.ArgumentParser ()
+  arg_parser.add_argument ("-c", "--copy", action = "store_true")
   arg_parser.add_argument ("in_path", nargs = 1, help = "path containing source glsl files")
   arg_parser.add_argument ("out_path", nargs = 1, help = "where to store output files")
   arg_parser.add_argument ("filenames", nargs = '*', help = "optional list of file paths relative to current directory")
@@ -127,11 +128,16 @@ if __name__ == "__main__":
   out_path = args.out_path[0]
 
   def minifyFile (filename):
-    minified_text = minifier.minifyFile (filename)
     out_dirname   = os.path.join (out_path, os.path.relpath (os.path.dirname (filename), in_path))
     out_filename  = os.path.join (out_dirname, os.path.basename (filename))
 
-    print ("minifying " + out_filename)
+    if args.copy:
+      print ("copying " + out_filename)
+      with open (filename, "rb") as f:
+        out_text = f.read ()
+    else:
+      print ("minifying " + out_filename)
+      out_text = minifier.minifyFile (filename)
 
     try:
       os.makedirs (out_dirname)
@@ -142,7 +148,7 @@ if __name__ == "__main__":
         raise
 
     with open (out_filename, "wb") as f:
-      f.write (minified_text)
+      f.write (out_text)
 
   if args.filenames:
     for filename in args.filenames:

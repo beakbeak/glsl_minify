@@ -24,7 +24,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
-from sys import stderr
 
 class GlslMinifier:
     re_tab                = re.compile(br"\t")
@@ -105,53 +104,74 @@ class GlslMinifier:
         with open(filename, "rb") as f:
             return self.minifyBytes(f.read())
 
+
 if __name__ == "__main__":
     import argparse
 
     arg_parser = argparse.ArgumentParser()
+
     arg_parser.add_argument(
-        "-c", "--copy", action = "store_true", help = "copy files without minifying")
-    arg_parser.add_argument("in_path", nargs = 1, help = "path containing source glsl files")
-    arg_parser.add_argument("out_path", nargs = 1, help = "where to store output files")
+        "--copy", action="store_true", help="copy files without minifying")
     arg_parser.add_argument(
-        "filenames", nargs = '*',
-        help = "optional list of file paths relative to current directory")
+        "-q", "--quiet", action="store_true", help="disable status messages")
+    arg_parser.add_argument(
+        "-i", "--indir", default=".", help="path containing source glsl files (default: .)")
+    arg_parser.add_argument(
+        "-o", "--outdir", required=True, help="where to store output files")
+    arg_parser.add_argument(
+        "filename", nargs='*',
+        help=(
+            "file path relative to INDIR. If unspecified, all .glsl files reachable from INDIR "
+            "will be processed"))
+
     args = arg_parser.parse_args()
 
-    import os, errno
+    import sys, os, errno
 
     minifier = GlslMinifier()
-    in_path = args.in_path[0]
-    out_path = args.out_path[0]
+    in_base = os.path.normpath(args.indir)
+    out_base = os.path.normpath(args.outdir)
+
+    def log(message):
+        if not args.quiet:
+            print(message)
 
     def minifyFile(filename):
-        out_dirname   = os.path.join(out_path, os.path.relpath(os.path.dirname(filename), in_path))
-        out_filename  = os.path.join(out_dirname, os.path.basename(filename))
+        relative_dir = os.path.relpath(os.path.dirname(filename), in_base)
+        out_dir      = os.path.normpath(os.path.join(out_base, relative_dir))
+        out_path     = os.path.join(out_dir, os.path.basename(filename))
 
         if args.copy:
-            print("copying " + out_filename)
+            log("copying " + out_path)
             with open(filename, "rb") as f:
                 out_text = f.read()
         else:
-            print("minifying " + out_filename)
+            log("minifying " + out_path)
             out_text = minifier.minifyFile(filename)
 
         try:
-            os.makedirs(out_dirname)
+            os.makedirs(out_dir)
         except OSError as e:
-            if e.errno == errno.EEXIST and os.path.isdir(out_dirname):
+            if e.errno == errno.EEXIST and os.path.isdir(out_dir):
                 pass
             else:
                 raise
 
-        with open(out_filename, "wb") as f:
+        with open(out_path, "wb") as f:
             f.write(out_text)
 
-    if args.filenames:
-        for filename in args.filenames:
-            minifyFile(filename)
+
+    real_in_base  = os.path.realpath(in_base)
+    real_out_base = os.path.realpath(out_base)
+
+    if os.path.commonpath([real_in_base, real_out_base]) == real_in_base:
+        sys.exit("error: OUTDIR must not be a subdirectory of INDIR")
+
+    if args.filename:
+        for filename in args.filename:
+            minifyFile(os.path.join(in_base, filename))
     else:
-        for dirpath, dirnames, filenames in os.walk(in_path, onerror = lambda e: stderr.write(str(e))):
+        for dirpath, dirnames, filenames in os.walk(in_base, onerror=lambda e: sys.stderr.write(str(e))):
             for filename in filenames:
                 if filename.lower().endswith(".glsl"):
                     minifyFile(os.path.join(dirpath, filename))

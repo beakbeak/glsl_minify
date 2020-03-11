@@ -62,6 +62,13 @@ class GlslMinifier:
         self.name_index += 1
         return out
 
+    def _mapName(self, identifier):
+        replacement = self.replacements.get(identifier)
+        if replacement is None:
+            replacement = self._nextName()
+            self.replacements[identifier] = replacement
+        return replacement
+
     def minifyBytes(self, text):
         text = self.re_tab.sub(b" ", text)
         text = self.re_remove.sub(b"", text)
@@ -79,24 +86,18 @@ class GlslMinifier:
         text = self.re_multispace.sub(br"\1", text)
 
         out = []
-        index = 0
+        text_position = 0
 
         for match in self.re_identifier.finditer(text):
-            if(match.group(0).startswith(self.in_prefix)
-                    and match.group(0).find(b"__") < 0):
-                replacement = self.replacements.get(match.group(0))
-                if replacement is None:
-                    replacement = self._nextName()
-                    self.replacements[match.group(0)] = replacement
+            if (match.group(0).startswith(self.in_prefix) and match.group(0).find(b"__") < 0):
+                if text_position < match.start():
+                    out.append(text[text_position:match.start()])
 
-                if index < match.start():
-                    out.append(text[index:match.start()])
+                out.append(self._mapName(match.group(0)))
+                text_position = match.end()
 
-                out.append(replacement)
-                index = match.end()
-
-        if index < len(text):
-            out.append(text[index:])
+        if text_position < len(text):
+            out.append(text[text_position:])
 
         return b"".join(out)
 
@@ -160,11 +161,13 @@ if __name__ == "__main__":
         with open(out_path, "wb") as f:
             f.write(out_text)
 
+    def isSubdirectory(dir, subdir):
+        real_dir = os.path.realpath(dir)
+        real_subdir = os.path.realpath(subdir)
+        return os.path.commonpath([real_dir, real_subdir]) == real_dir
 
-    real_in_base  = os.path.realpath(in_base)
-    real_out_base = os.path.realpath(out_base)
 
-    if os.path.commonpath([real_in_base, real_out_base]) == real_in_base:
+    if isSubdirectory(in_base, out_base):
         sys.exit("error: OUTDIR must not be a subdirectory of INDIR")
 
     if args.filename:
